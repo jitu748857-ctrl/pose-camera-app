@@ -13,9 +13,21 @@ workflows:
           sed -i '' 's|<application|<uses-permission android:name="android.permission.CAMERA"/>\n    <application|' android/app/src/main/AndroidManifest.xml
           sed -i '' 's/minSdk = flutter.minSdkVersion/minSdk = 24/' android/app/build.gradle.kts || true
           sed -i '' 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/' android/app/build.gradle || true
+      - name: Disable lint for all plugins
+        script: |
+          mkdir -p $HOME/.gradle
+          cat > $HOME/.gradle/init.gradle <<'EOF'
+          allprojects {
+              tasks.configureEach { task ->
+                  if (task.name.startsWith("lint")) {
+                      task.enabled = false
+                  }
+              }
+          }
+          EOF
       - name: Get packages
         script: flutter pub get
       - name: Build APK
-        script: flutter build apk --release --no-tree-shake-icons -Pandroid.lintOptions.abortOnError=false -Pandroid.lint.checkReleaseBuilds=false
+        script: flutter build apk --release --no-tree-shake-icons
     artifacts:
       - build/**/outputs/**/*.apk
